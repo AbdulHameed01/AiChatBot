@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot - Professional Chat Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 AI Chatbot Assistant</h1>
+            <p>Your intelligent conversation companion - Always here to help</p>
+        </div>
+        <div class="messages-container" id="messagesContainer">
+            <div class="welcome-message">
+                <h2>Hello! 👋</h2>
+                <p>Ask me anything. I'm here to help!</p>
+            </div>
+        </div>
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Type your message here..." 
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn" title="Send message (Ctrl+Enter)">
+                    📤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const messagesContainer = document.getElementById('messagesContainer');
+
+        // Knowledge base for the chatbot
+        const knowledgeBase = [
+            // Greetings
+            { keywords: ['hello', 'hi', 'hey', 'greetings'], response: 'Hello! 👋 How can I help you today?' },
+            { keywords: ['what\'s up', 'how are you', 'how are you doing'], response: 'I\'m doing great! Thanks for asking. How can I assist you?' },
+            
+            // Questions about me
+            { keywords: ['who are you', 'what are you', 'tell me about yourself'], response: 'I\'m an AI chatbot built with HTML, CSS, and JavaScript. I can answer questions, chat with you, and help with information!' },
+            { keywords: ['what can you do', 'your capabilities'], response: 'I can:\n• Answer questions on various topics\n• Have casual conversations\n• Provide information and explanations\n• Help with general knowledge\n• Chat in a friendly manner!' },
+            
+            // Time and date
+            { keywords: ['what time is it', 'tell me the time', 'current time'], response: `The current time is: ${new Date().toLocaleTimeString()}` },
+            { keywords: ['what\'s today', 'what\'s the date', 'today\'s date'], response: `Today\'s date is: ${new Date().toLocaleDateString()}` },
+            
+            // General knowledge
+            { keywords: ['what is python', 'python language'], response: 'Python is a popular programming language known for its simplicity and readability. It\'s used in web development, data science, AI, and more!' },
+            { keywords: ['what is javascript', 'javascript language'], response: 'JavaScript is a programming language used primarily for creating interactive web pages. It runs in web browsers and is essential for modern web development!' },
+            { keywords: ['what is html', 'html language'], response: 'HTML (HyperText Markup Language) is the standard markup language for creating web pages. It provides the structure and content of websites!' },
+            { keywords: ['what is css', 'css language'], response: 'CSS (Cascading Style Sheets) is used to style and layout web pages. It controls colors, fonts, spacing, and overall visual appearance!' },
+            
+            // Math questions
+            { keywords: ['what is 2+2', '2 plus 2', 'two plus two'], response: '2 + 2 = 4' },
+            { keywords: ['what is 10*5', '10 times 5', 'ten times five'], response: '10 × 5 = 50' },
+            { keywords: ['what is 100/5', '100 divided by 5'], response: '100 ÷ 5 = 20' },
+            
+            // Famous facts
+            { keywords: ['capital of france', 'france capital'], response: 'The capital of France is Paris!' },
+            { keywords: ['capital of usa', 'usa capital', 'capital of united states'], response: 'The capital of the United States is Washington, D.C.' },
+            { keywords: ['tallest mountain', 'mount everest'], response: 'Mount Everest is the tallest mountain on Earth, standing at 8,849 meters (29,032 feet) above sea level!' },
+            
+            // Motivation
+            { keywords: ['motivate me', 'inspire me', 'i need motivation'], response: 'You\'ve got this! 💪 Every expert was once a beginner. Keep pushing forward, believe in yourself, and don\'t be afraid to ask for help. Your effort today builds tomorrow\'s success!' },
+            { keywords: ['give me a quote', 'inspirational quote'], response: '"The best time to plant a tree was 20 years ago. The second best time is now." - Chinese Proverb\n\nRemember, it\'s never too late to start!' },
+            
+            // Jokes
+            { keywords: ['tell me a joke', 'make me laugh', 'funny joke'], response: 'Why did the programmer quit his job?\nBecause he didn\'t get arrays! 😄' },
+            { keywords: ['another joke', 'another one'], response: 'How many programmers does it take to change a light bulb?\nNone, that\'s a hardware problem! 💡' },
+            
+            // Farewell
+            { keywords: ['bye', 'goodbye', 'see you', 'farewell'], response: 'Goodbye! It was nice chatting with you. Have a great day! 👋' },
+            { keywords: ['thanks', 'thank you', 'appreciate it'], response: 'You\'re welcome! Happy to help. Feel free to ask me anything anytime!' },
+            
+            // Help
+            { keywords: ['help', 'how do i use this', 'instructions'], response: 'I\'m an intelligent chatbot! You can:\n• Ask me questions about anything\n• Ask for jokes or motivational quotes\n• Ask me facts or math questions\n• Have a friendly conversation\n\nJust type your message and click send or press Enter!' }
+        ];
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+        });
+
+        // Send message on Enter (Ctrl+Enter for new line)
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+
+            // Remove welcome message if it exists
+            const welcome = messagesContainer.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+
+            // Add user message
+            addMessage(message, 'user');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            // Simulate thinking time (100-500ms)
+            setTimeout(() => {
+                const response = getResponse(message);
+                addMessage(response, 'bot');
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }, 100 + Math.random() * 400);
+        }
+
+        function getResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+
+            // Check each pattern in the knowledge base
+            for (let i = 0; i < knowledgeBase.length; i++) {
+                for (let j = 0; j < knowledgeBase[i].keywords.length; j++) {
+                    if (lowerMessage.includes(knowledgeBase[i].keywords[j])) {
+                        return knowledgeBase[i].response;
+                    }
+                }
+            }
+
+            // Default response if no match found
+            const defaultResponses = [
+                'That\'s an interesting question! 🤔 I\'m not sure about that one. Try asking me about something else!',
+                'Hmm, I don\'t have specific information about that. Is there something else I can help you with?',
+                'I\'m not familiar with that topic. But I\'d love to help with other questions!',
+                'That\'s a great question, but it\'s beyond my current knowledge. Feel free to ask me something else! 😊'
+            ];
+
+            return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+        }
+
+        function addMessage(text, sender, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = sender === 'user' ? 'You' : 'AI';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            if (isError) content.classList.add('error');
+            content.innerHTML = sender === 'bot' ? formatMessage(text) : text;
+
+            if (sender === 'user') {
+                messageDiv.appendChild(content);
+                messageDiv.appendChild(avatar);
+            } else {
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(content);
+            }
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            return content;
+        }
+
+        function formatMessage(text) {
+            // Format line breaks and bold text
+            let formatted = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            return formatted;
+        }
+    </script>
+</body>
+</html>
